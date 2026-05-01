@@ -2,4 +2,4 @@
 
 ### Authors: 
 
-Roan Morgan, Hyke, and Jonathan
+Roan Morgan, Hayk, and Jonathan
