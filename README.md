@@ -2,9 +2,14 @@
 
 ### Authors: 
 
-Roan Morgan, Hayk Chaloyan, and Jonathan
+Roan Morgan, Hayk Chaloyan, and Jonathan Martin
 
 ### Environment:
+```
+pip install -r requirements.txt
+```
+
+python version 3.12.3
 
 nes-py
 gym-super-mario-bros
