@@ -3,3 +3,12 @@
 ### Authors: 
 
 Roan Morgan, Hayk Chaloyan, and Jonathan
+
+### Environment:
+
+nes-py
+gym-super-mario-bros
+gym==0.21.0
+numpy
+tqdm
+matplotlib
