@@ -1,7 +1,7 @@
 
 import time
-
 import math
+
 class GameState:
     dist_from_start: int
     at_goal: bool
@@ -11,13 +11,17 @@ class GameState:
     lives: int
     level: int
 
-    def __init__(self, dist_from_start: int, 
-                       at_goal: bool, 
-                       nearest_enemy: int,
-                       score: int, 
-                       time:int, 
-                       lives: int = 3, 
-                       level:int = 1):
+    def __init__(
+            self, 
+            dist_from_start: int, 
+            at_goal: bool, 
+            nearest_enemy: int,
+            score: int, 
+            time:int, 
+            lives: int = 3, 
+            level:int = 1
+        ):
+                       
         self.dist_from_start = dist_from_start
         self.at_goal = at_goal
         self.nearest_enemy = nearest_enemy
