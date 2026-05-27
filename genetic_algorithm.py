@@ -35,13 +35,14 @@ class MarioNN (nn.Module):
     # send the game state through the network
     def forward(self, game_state: GameState):
 
-        # TODO:
-        # 1. turn the game state into a tensor
+        # turn the game state into a tensor
         game_state_tensor = game_state.toTensor()
-        # 2. get the logits from the stack
-        # 3. ret logits
 
-        pass
+        # send the game state forward through the network
+        outputs = self.stack.forward(game_state_tensor)
+
+        # return the outputs
+        return outputs 
 
     # turn the array into a flat array of weights
     def get_weights_flat(self):
