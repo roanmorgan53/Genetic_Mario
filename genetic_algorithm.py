@@ -2,6 +2,15 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+#! if there are more gamestate variables added this must be changed
+NUM_GAMESTATE_ELEMENTS = 7
+
+# left, right, jump, down
+NUM_MOVEMENTS = 4
+
+# make the number of hidden nodes be between number of inputs and outputs
+NUM_HIDDEN_NODES = (NUM_GAMESTATE_ELEMENTS + NUM_MOVEMENTS) // 2
+
 class MarioNN (nn.Module):
 
     def __init__(self):
@@ -9,8 +18,18 @@ class MarioNN (nn.Module):
 
         self.flatten = nn.Flatten()
 
-        # TODO: make the nn stack
-        # self.stack = 
+        self.stack = nn.Sequential(
+
+            # takes in the gamestate
+            nn.Linear(NUM_GAMESTATE_ELEMENTS, NUM_HIDDEN_NODES),
+
+            # based on weights and tanh activation fn, gives num -1 <= x <= 1
+            nn.Tanh(),
+
+            # outputs the probability of making any specific movements
+            nn.Linear(NUM_HIDDEN_NODES, NUM_MOVEMENTS)
+
+        )
 
     # send the game state through the network
     def forward(self, game_state):
