@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from gamestate import GameState
 
 #! if there are more gamestate variables added this must be changed
 NUM_GAMESTATE_ELEMENTS = 7
@@ -32,10 +33,11 @@ class MarioNN (nn.Module):
         )
 
     # send the game state through the network
-    def forward(self, game_state):
+    def forward(self, game_state: GameState):
 
         # TODO:
         # 1. turn the game state into a tensor
+        game_state_tensor = game_state.toTensor()
         # 2. get the logits from the stack
         # 3. ret logits
 
