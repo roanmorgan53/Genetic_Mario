@@ -41,12 +41,17 @@ class MarioNN (nn.Module):
         # send the game state forward through the network
         outputs = self.stack.forward(game_state_tensor)
 
-        # return the outputs
         return outputs 
 
     # turn the array into a flat array of weights
     def get_weights_flat(self):
-        pass
+        weights = []
+
+        for param in self.parameters():
+            weights.extend(param.data.flatten().numpy())
+        
+        # return the weights as a numpy array
+        return np.array(weights)
 
     # from a 1-Dimensional nparray, set nn weights
     def set_weights_flat(self, weights_flat):
