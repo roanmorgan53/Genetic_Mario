@@ -6,8 +6,8 @@ from gamestate import GameState
 #! if there are more gamestate variables added this must be changed
 NUM_GAMESTATE_ELEMENTS = 7
 
-# left, right, jump, down
-NUM_MOVEMENTS = 4
+# left, right, jump, down, run/fireball, up(vines, optional)
+NUM_MOVEMENTS = 5
 
 # make the number of hidden nodes be between number of inputs and outputs
 NUM_HIDDEN_NODES = (NUM_GAMESTATE_ELEMENTS + NUM_MOVEMENTS) // 2
