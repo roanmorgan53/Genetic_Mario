@@ -38,6 +38,9 @@ Three Options:
 
 - Markov decision process (Hard but most likely best model for project, fits deep learning model)
 
+#### Resources
+https://www.v7darwin.com/blog/neural-networks-activation-functions
+
 
 ### TODO:
 

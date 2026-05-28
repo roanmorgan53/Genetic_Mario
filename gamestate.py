@@ -1,6 +1,7 @@
 
 import time
 import math
+import torch
 
 class GameState:
     dist_from_start: int
@@ -30,6 +31,22 @@ class GameState:
         self.lives = lives
         self.level = level
 
+    # turns the metadata into a 1D tensor
+    def toTensor(self):
+        stateList = [
+            self.dist_from_start,
+            self.at_goal,
+            self.score,
+            self.nearest_enemy,
+            self.time,
+            self.lives,
+            self.level
+        ]
+
+        t = torch.tensor(stateList)
+        print ("Gamestate Tensor:", t)
+
+        return t
 
 def get_enemy_positions(ram):
     enemies = []
@@ -66,3 +83,5 @@ def get_nearest_enemy(enemy_positions, mario_x, mario_y):
         print((enemy_x, enemy_y))
         time.sleep(100)
     return nearest_enemy
+
+    
