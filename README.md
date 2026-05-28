@@ -15,11 +15,14 @@ python version 3.12.3
 
 Specific Version Requirements
 
-- `gym==0.25.1` — gym-super-mario-bros not compatible with 0.26+
-- `numpy==1.26.4` — gym not compatible with numpy 2.0+
+- `gym==0.25.1` 
+- `numpy==1.26.4`
 - `nes-py==8.2.1`
 - `gym-super-mario-bros==7.4.0`
 - `pyglet==1.5.21`
+
+gym-super-mario-bros not compatible with 0.26+
+gym not compatible with numpy 2.0+
 
 ### Project Framework
 
@@ -38,4 +41,5 @@ Three Options:
 
 ### TODO:
 
-- Scaffold project and figure out how to split up work
+- Import Neural Net
+- Figure out how to filter "dying enemy" out of gamestate
