@@ -39,9 +39,12 @@ def get_enemy_positions(ram):
 
             enemies.append((enemy_x, enemy_y))
 
+    
     if len(enemies) > 0:
         print(enemies)
         time.sleep(0.1)
+    
+
     return enemies
 
 def get_nearest_enemy(enemy_positions, mario_x, mario_y):
@@ -53,4 +56,9 @@ def get_nearest_enemy(enemy_positions, mario_x, mario_y):
         if man_dist < nearest_enemy:
             nearest_enemy = man_dist
 
+    if(nearest_enemy <= 70):
+        print(nearest_enemy)
+        print((mario_x, mario_y))
+        print((enemy_x, enemy_y))
+        time.sleep(100)
     return nearest_enemy
