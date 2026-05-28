@@ -63,7 +63,6 @@ def get_enemy_positions(ram):
     
     if len(enemies) > 0:
         print(enemies)
-        time.sleep(0.1)
     
 
     return enemies
@@ -81,7 +80,7 @@ def get_nearest_enemy(enemy_positions, mario_x, mario_y):
         print(nearest_enemy)
         print((mario_x, mario_y))
         print((enemy_x, enemy_y))
-        time.sleep(100)
+
     return nearest_enemy
 
     
