@@ -1,83 +1,83 @@
-import torch
-import torch.nn as nn
 import numpy as np
+import gym_super_mario_bros
+import torch
+import gamestate
 from gamestate import GameState
+from marionn import MarioNN
 
-#! if there are more gamestate variables added this must be changed
-NUM_GAMESTATE_ELEMENTS = 7
+INPUT_SPACE_LENGTH = 9
 
-# left, right, jump, down, run/fireball, up(vines, optional)
-NUM_MOVEMENTS = 5
 
-# make the number of hidden nodes be between number of inputs and outputs
-NUM_HIDDEN_NODES = (NUM_GAMESTATE_ELEMENTS + NUM_MOVEMENTS) // 2
-
-class MarioNN (nn.Module):
-
+class GeneticAlgorithm() :
     def __init__(self):
-        super().__init__()
-
-        self.flatten = nn.Flatten()
-
-        self.stack = nn.Sequential(
-
-            # takes in the gamestate
-            nn.Linear(NUM_GAMESTATE_ELEMENTS, NUM_HIDDEN_NODES),
-
-            # based on weights and tanh activation fn, gives num -1 <= x <= 1
-            nn.Tanh(),
-
-            # outputs the probability of making any specific movements
-            nn.Linear(NUM_HIDDEN_NODES, NUM_MOVEMENTS)
-
-        )
-
-    # send the game state through the network
-    def forward(self, game_state: GameState):
-
-        # turn the game state into a tensor
-        game_state_tensor = game_state.toTensor()
-
-        # send the game state forward through the network
-        outputs = self.stack.forward(game_state_tensor)
-
-        return outputs 
-
-    # turn the array into a flat array of weights
-    def get_weights_flat(self):
-        weights = []
-
-        for param in self.parameters():
-            weights.extend(param.data.flatten().numpy())
-        
-        # return the weights as a numpy array
-        return np.array(weights)
-
-    # from a 1-Dimensional nparray, set nn weights
-    def set_weights_flat(self, weights_flat):
         pass
 
-    def get_num_weights(self):
-        return sum(p.numel() for p in self.parameters())
+    # create the starting population
+    def generate_solutions(self, population_size) -> list[MarioNN]:
+        population = []
 
-    def create_individual(self):
-        model = MarioNN()
-        return model
+        for _ in range(population_size):
+            moustached_italian = MarioNN()
+            num_weights = moustached_italian.get_num_weights()
 
-    # make a child given the weights of the parents 
-    def crossover(self, parent1, parent2):
-        pass
+            # populate the weights with random values
+            rand_weights = np.random.uniform(-0.05,0.05, size=num_weights)
 
-    # randomly change random weights of the model to get non-deterministic behavior 
-    def mutate(self, model, mutation_rate=0.1, mutation_strength=0.5):
-        pass
+            # set the weights with the random values
+            moustached_italian.set_weights_flat(rand_weights)
 
-    def generate_solutions(population_size):
-        pass
+            population.append(moustached_italian)
 
+        return population
+
+    # sends mario through the level
     # returns a metric of how well the model preformed
-    def fitness():
-        pass
+    def fitness(self, model: MarioNN, env: gym_super_mario_bros.SuperMarioBrosEnv, max_steps=10000):
+
+        fitness = 0
+
+        # start from the beginning
+        state = env.reset()
+
+        frame = 0
+        while frame < max_steps:
+            result_weights = model.forward(GameState(env))
+
+            action = int(torch.argmax(result_weights).item())
+
+            # print(gamestate.ACTION_SET[action])
+
+            state, reward, done, info = env.step(action)
+
+            # baseline value, how far mario went in the x
+            fitness = info["x_pos"]
+
+            # add a percentage of the score
+            fitness += 0.1 * info["score"]
+
+            # incentivize coins
+            fitness += 2 * info["coins"]
+
+            # disincentivize taking a long time
+            fitness -= 0.1 * (400 - info["time"])
+
+            # completed the level
+            if info["flag_get"]:
+                fitness += 1000
+
+            if done:
+                if not info["flag_get"]:
+                    fitness -= 100
+
+                break
+
+            env.render()
+
+            frame += 1
+
+        env.reset()
+
+        return fitness
 
     def selection():
         pass

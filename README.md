@@ -44,5 +44,4 @@ https://www.v7darwin.com/blog/neural-networks-activation-functions
 
 ### TODO:
 
-- Import Neural Net
 - Figure out how to filter "dying enemy" out of gamestate

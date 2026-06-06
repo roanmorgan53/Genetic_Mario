@@ -2,6 +2,21 @@
 import math
 import torch
 from typing import Any
+import sys
+
+ACTION_SET = [
+    [],
+    ['right'],
+    ['right', 'A'],
+    ['right', 'B'],
+    ['right', 'A', 'B'],
+    ['left', 'A'],
+    ['left', 'B'],
+    ['left', 'A', 'B'],
+    ['up'],
+    ['down'],
+    ['A']
+]
 
 class GameState:
     dist_from_start: int
@@ -68,7 +83,7 @@ class GameState:
     def toTensor(self):
         stateList = [
             self.dist_from_start,
-            self.at_goal,
+            int(self.at_goal),
             self.score,
             self.nearest_enemy,
             self.time,
@@ -96,7 +111,9 @@ def get_enemy_positions(ram):
 
 def get_nearest_enemy(enemy_positions, mario_x, mario_y):
 
-    nearest_enemy = math.inf
+    # default to the largest int val possible 
+    nearest_enemy = sys.maxsize
+
     for enemy_x, enemy_y in enemy_positions:
         man_dist = abs(mario_x - enemy_x) + abs(mario_y - enemy_y)
 
