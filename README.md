@@ -44,7 +44,5 @@ https://www.v7darwin.com/blog/neural-networks-activation-functions
 
 ### TODO:
 
-- Scaffold project and figure out how to split up work
-
-
-- 
+- Import Neural Net
+- Figure out how to filter "dying enemy" out of gamestate
