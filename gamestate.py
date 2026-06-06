@@ -2,6 +2,7 @@
 import time
 import math
 import torch
+import sys
 
 class GameState:
     dist_from_start: int
@@ -35,7 +36,7 @@ class GameState:
     def toTensor(self):
         stateList = [
             self.dist_from_start,
-            self.at_goal,
+            int(self.at_goal),
             self.score,
             self.nearest_enemy,
             self.time,
@@ -43,8 +44,8 @@ class GameState:
             self.level
         ]
 
+        # transform the list to a tensor
         t = torch.tensor(stateList)
-        print ("Gamestate Tensor:", t)
 
         return t
 
@@ -62,12 +63,14 @@ def get_enemy_positions(ram):
 
     if len(enemies) > 0:
         print(enemies)
-        time.sleep(0.1)
+
     return enemies
 
 def get_nearest_enemy(enemy_positions, mario_x, mario_y):
 
-    nearest_enemy = math.inf
+    # default to the largest int val possible 
+    nearest_enemy = sys.maxsize
+
     for enemy_x, enemy_y in enemy_positions:
         man_dist = abs(mario_x - enemy_x) + abs(mario_y - enemy_y)
 
