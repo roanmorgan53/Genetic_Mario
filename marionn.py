@@ -90,11 +90,35 @@ class MarioNN (nn.Module):
 
     # make a child given the weights of the parents 
     def crossover(self, parent1, parent2):
-        pass
+        child = MarioNN()
+
+        father_flat = parent1.get_weights_flat()
+        mother_flat = parent2.get_weights_flat()
+
+        # get a random point for gene mixing
+        crossover_point = np.random.randint(len(father_flat))
+
+        child_weights = np.concatenate([
+            father_flat[:crossover_point],
+            mother_flat[crossover_point:]
+        ])
+
+        child.set_weights_flat(child_weights)
+        return child
 
     # randomly change random weights of the model to get non-deterministic behavior 
     def mutate(self, model, mutation_rate=0.1, mutation_strength=0.5):
-        pass
+        weights = model.get_weights_flat()
+
+        # randomly choose the weights to mutate
+        mask = np.random.random(len(weights)) < mutation_rate
+
+        # apply the mutation on the weights
+        weights[mask] += np.random.randn(mask.sum()) * mutation_strength
+
+        model.set_weights_flat(weights)
+
+        return model
 
 class WeightsSizeMismatchError(Exception):
     def __init__(self, expected, received):
