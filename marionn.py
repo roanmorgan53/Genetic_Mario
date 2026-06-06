@@ -1,13 +1,14 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import gamestate
 from gamestate import GameState
 
 #! if there are more gamestate variables added this must be changed
 NUM_GAMESTATE_ELEMENTS = 7
 
 # left, right, jump, down, run/fireball, up(vines, optional)
-NUM_MOVEMENTS = 6
+NUM_MOVEMENTS = len(gamestate.ACTION_SET)
 
 # make the number of hidden nodes be between number of inputs and outputs
 NUM_HIDDEN_NODES = (NUM_GAMESTATE_ELEMENTS + NUM_MOVEMENTS) // 2
@@ -33,7 +34,7 @@ class MarioNN (nn.Module):
         )
 
     # send the game state through the network
-    def forward(self, game_state: GameState):
+    def forward(self, game_state: GameState) -> torch.Tensor:
 
         # turn the game state into a tensor
         game_state_tensor = game_state.toTensor()

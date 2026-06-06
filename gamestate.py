@@ -2,6 +2,21 @@
 import math
 import torch
 from typing import Any
+import sys
+
+ACTION_SET = [
+    [],
+    ['right'],
+    ['right', 'A'],
+    ['right', 'B'],
+    ['right', 'A', 'B'],
+    ['left', 'A'],
+    ['left', 'B'],
+    ['left', 'A', 'B'],
+    ['up'],
+    ['down'],
+    ['A']
+]
 
 class GameState:
     dist_from_start: int
