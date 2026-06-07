@@ -2,8 +2,10 @@ import numpy as np
 import gym_super_mario_bros
 import torch
 import gamestate
+import random
 from gamestate import GameState
 from marionn import MarioNN
+
 
 INPUT_SPACE_LENGTH = 9
 
@@ -79,5 +81,55 @@ class GeneticAlgorithm() :
 
         return fitness
 
-    def selection():
+    """
+        given the models and their fitness scores, 
+        and the amount of genetic elites, only select the
+        best performing models to pass on their genes
+    """
+    def selection(self, modelScores: list[tuple[MarioNN, float]], num_elites: int):
+        elites = []
+        
+        # sort the list by fitness
+        sorted = modelScores
+        sorted.sort(key=lambda x : x[1], reverse=True)
+
+        i = 0
+        for model, score in sorted:
+            if i >= num_elites:
+                break
+
+            # stop if there are negative weights being pushed
+            if score <= 0:
+                break
+
+            elites.append(model)
+
+            i += 1
+
+        return elites
+
+    """
+        select individuals from the population tournament style.
+    """
+    def pick_parent(self, modelScores: list[tuple[MarioNN, float]]):
+        if len(modelScores) < 3:
+            return MarioNN()
+
+        hunger_games_tributes = []
+
+        # get the three tributes that will fight to continue their bloodline
+        while len(hunger_games_tributes) < 3:
+            tribute = modelScores[random.randint(0, len(modelScores) - 1)]
+
+            if tribute not in hunger_games_tributes:
+                hunger_games_tributes.append(tribute)
+
+        katniss = max(hunger_games_tributes, key=lambda x: x[1])[0]
+
+        return katniss
+
+    """
+        generates the new population to run 
+    """
+    def create_next_generation(self, modelScores):
         pass
