@@ -9,6 +9,8 @@ from marionn import MarioNN
 
 INPUT_SPACE_LENGTH = 9
 
+NUM_ELITES = 10
+
 
 class GeneticAlgorithm() :
     def __init__(self):
@@ -132,4 +134,24 @@ class GeneticAlgorithm() :
         generates the new population to run 
     """
     def create_next_generation(self, modelScores):
-        pass
+        pop_size = len(modelScores)
+        new_population = []
+        elites = self.selection(modelScores, NUM_ELITES)
+
+        # keep all the elites as-is
+        for elite in elites:
+            new_population.append(elite)
+
+        remaining = pop_size - len(elites)
+
+        # based on parent picking, construct the rest of the population
+        for _ in range(remaining):
+            mother = self.pick_parent(modelScores)
+            father = self.pick_parent(modelScores)
+
+            child = MarioNN()
+            child = child.crossover(father, mother)
+
+            new_population.append(child)
+        
+        return new_population
