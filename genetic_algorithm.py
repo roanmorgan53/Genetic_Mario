@@ -6,19 +6,40 @@ import random
 from gamestate import GameState
 from marionn import MarioNN
 
-
+# constants
 INPUT_SPACE_LENGTH = 9
-
-NUM_ELITES = 10
-
+NUM_ELITES = 2
 
 class GeneticAlgorithm() :
+    best = MarioNN()
+    modelScores = []
+    elites = []
+    population = []
+
     def __init__(self):
         pass
 
+    """
+        iterates the genetic algorithm 
+    """
+    def run_generation(self, env: gym_super_mario_bros.SuperMarioBrosEnv, individuals_per_gen=10, max_steps=1000):
+        if not self.population:
+            self.generate_solutions(100)
+        else:
+            self.create_next_generation()
+
+        self.modelScores = []
+
+        # run the models and get the fitness
+        for mario in self.population:
+            fitness_score = self.fitness(mario, env, max_steps)
+            self.modelScores.append((mario, fitness_score))
+
+        
+
     # create the starting population
     def generate_solutions(self, population_size) -> list[MarioNN]:
-        population = []
+        self.population = []
 
         for _ in range(population_size):
             moustached_italian = MarioNN()
@@ -30,9 +51,9 @@ class GeneticAlgorithm() :
             # set the weights with the random values
             moustached_italian.set_weights_flat(rand_weights)
 
-            population.append(moustached_italian)
+            self.population.append(moustached_italian)
 
-        return population
+        return self.population
 
     # sends mario through the level
     # returns a metric of how well the model preformed
@@ -48,8 +69,6 @@ class GeneticAlgorithm() :
             result_weights = model.forward(GameState(env))
 
             action = int(torch.argmax(result_weights).item())
-
-            # print(gamestate.ACTION_SET[action])
 
             state, reward, done, info = env.step(action)
 
@@ -88,27 +107,27 @@ class GeneticAlgorithm() :
         and the amount of genetic elites, only select the
         best performing models to pass on their genes
     """
-    def selection(self, modelScores: list[tuple[MarioNN, float]], num_elites: int):
-        elites = []
+    def selection(self):
+        self.elites = []
         
         # sort the list by fitness
-        sorted = modelScores
+        sorted = self.modelScores
         sorted.sort(key=lambda x : x[1], reverse=True)
 
         i = 0
         for model, score in sorted:
-            if i >= num_elites:
+            if i >= NUM_ELITES:
                 break
 
             # stop if there are negative weights being pushed
             if score <= 0:
                 break
 
-            elites.append(model)
+            self.elites.append(model)
 
             i += 1
 
-        return elites
+        return self.elites
 
     """
         select individuals from the population tournament style.
@@ -133,25 +152,28 @@ class GeneticAlgorithm() :
     """
         generates the new population to run 
     """
-    def create_next_generation(self, modelScores):
-        pop_size = len(modelScores)
+    def create_next_generation(self):
+        pop_size = len(self.population)
         new_population = []
-        elites = self.selection(modelScores, NUM_ELITES)
+
+        # get the elites from the modelScores
+        self.selection()
 
         # keep all the elites as-is
-        for elite in elites:
+        for elite in self.elites:
             new_population.append(elite)
 
-        remaining = pop_size - len(elites)
+        remaining = pop_size - len(self.elites)
 
         # based on parent picking, construct the rest of the population
         for _ in range(remaining):
-            mother = self.pick_parent(modelScores)
-            father = self.pick_parent(modelScores)
+            mother = self.pick_parent(self.modelScores)
+            father = self.pick_parent(self.modelScores)
 
             child = MarioNN()
             child = child.crossover(father, mother)
 
             new_population.append(child)
         
-        return new_population
+        self.population = new_population
+        return self.population

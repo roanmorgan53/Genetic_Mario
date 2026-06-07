@@ -14,15 +14,15 @@ pop = GA.generate_solutions(50)
 env = gym_super_mario_bros.make('SuperMarioBros-v0')
 env = JoypadSpace(env, gamestate.ACTION_SET)
 
-modelScores = [] 
+original_reset = env.reset
 
-for moustached_italian in pop:
-    fit = GA.fitness(moustached_italian, env, 100)
+def reset_with_one_life(*args, **kwargs):
+    state = original_reset(*args, **kwargs)
+    env.unwrapped.ram[0x075A] = 0
+    return state
 
-    modelScores.append((moustached_italian, fit))
-     
-GA.selection(modelScores, genetic_algorithm.NUM_ELITES)
+env.reset = reset_with_one_life
+env.reset()
 
-new_pop = GA.create_next_generation(modelScores)
-
-print(new_pop)
+for _ in range(50): 
+    GA.run_generation(env, individuals_per_gen=10, max_steps=500)
