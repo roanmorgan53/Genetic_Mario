@@ -4,8 +4,7 @@ import numpy as np
 import gamestate
 from gamestate import GameState
 
-#! if there are more gamestate variables added this must be changed
-NUM_GAMESTATE_ELEMENTS = 7
+NUM_GAMESTATE_ELEMENTS = gamestate.NUM_GAMESTATE_FEATURES
 
 # left, right, jump, down, run/fireball, up(vines, optional)
 NUM_MOVEMENTS = len(gamestate.ACTION_SET)
