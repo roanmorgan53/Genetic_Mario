@@ -9,9 +9,7 @@ from nes_py.wrappers import JoypadSpace
 
 GA = GeneticAlgorithm()
 
-pop = GA.generate_solutions(50)
-
-env = gym_super_mario_bros.make('SuperMarioBros-v0')
+env = gym_super_mario_bros.make('SuperMarioBros-v3')
 env = JoypadSpace(env, gamestate.ACTION_SET)
 
 original_reset = env.reset
@@ -24,5 +22,11 @@ def reset_with_one_life(*args, **kwargs):
 env.reset = reset_with_one_life
 env.reset()
 
-for _ in range(50): 
-    GA.run_generation(env, individuals_per_gen=10, max_steps=500)
+individuals = 20
+steps = 10000
+generations = 1000 
+
+for _ in range(generations): 
+    GA.run_generation(env, individuals_per_gen=individuals, max_steps=steps)
+
+GA.save_best_model(f"best_mario_{generations}g_{individuals}i_{steps}st")
