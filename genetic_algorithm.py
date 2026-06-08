@@ -7,7 +7,7 @@ from gamestate import GameState
 from marionn import MarioNN
 
 # constants
-INPUT_SPACE_LENGTH = 9
+INPUT_SPACE_LENGTH = gamestate.NUM_GAMESTATE_FEATURES
 NUM_ELITES = 2 
 RANDOMS_PER_GENERATION = 2
 
@@ -232,7 +232,7 @@ class GeneticAlgorithm() :
         return filepath
 
     def load_model(self, filepath="best_mario_model.pth"):
-        checkpoint = torch.load(filepath, map_location=torch.device("cpu"))
+        checkpoint = torch.load(filepath, map_location=torch.device("cpu"), weights_only=True)
         loaded_model = MarioNN()
 
         if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
