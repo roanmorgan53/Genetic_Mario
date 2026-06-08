@@ -4,7 +4,7 @@ from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
 from render import MarioRenderer
 
-POPULATION_SIZE = 20
+POPULATION_SIZE = 3
 
 
 def make_env():

@@ -1,25 +1,28 @@
 import numpy as np
 import pygame
 
-# Number of grids (5 by 4) -> 20
-GRID_COLS = 5
-GRID_ROWS = 4
+# Number of grids (3 by 1) -> 3
+GRID_COLS = 3
+GRID_ROWS = 1
 
 # Single NES frame
 CELL_WIDTH = 256   # one NES frame width
 CELL_HEIGHT = 240   # one NES frame height
 
-# Window Dimensions
-WINDOW_W = 1920
-WINDOW_H = 1080
-
 # Total Grid Dimensions
 GRID_W = GRID_COLS * CELL_WIDTH   # 1280
 GRID_H = GRID_ROWS * CELL_HEIGHT   # 960
 
-# Black Bars to fill screen
-OFFSET_X  = (WINDOW_W - GRID_W) // 2   # 64  — black bar left/right
-OFFSET_Y  = (WINDOW_H - GRID_H) // 2   # 60  — black bar top/bottom
+# Title bar above the grid
+TITLE_H = 40
+
+# Canvas is exactly the grid plus the title bar
+# Scales to monitor using pygame.SCALED
+CANVAS_W = GRID_W
+CANVAS_H = GRID_H + TITLE_H
+
+OFFSET_X = 0
+OFFSET_Y = TITLE_H
 
 # --------------------------------
 
@@ -64,15 +67,15 @@ class MarioRenderer:
         self.population_size = population_size
 
         pygame.init()
-        
-        # Screen dimensions & fullscreen setting
-        self.screen = pygame.display.set_mode((WINDOW_W, WINDOW_H), pygame.FULLSCREEN)
-        
+
+        # SCALED stretches canvas to monitor size
+        self.screen = pygame.display.set_mode((CANVAS_W, CANVAS_H), pygame.FULLSCREEN | pygame.SCALED)
+
         pygame.display.set_caption("Genetic Mario")
 
         self.font       = pygame.font.SysFont(None, 18) # Index Font size = 18
         self.generation_font = pygame.font.SysFont(None, 36) # Generation Font Size = 36
-        
+
         self.clock      = pygame.time.Clock()
         self.quit       = False
 
@@ -129,7 +132,7 @@ class MarioRenderer:
             self.screen.blit(number_label, (cell_x + 4, cell_y + 4))
 
         generation_label = self.generation_font.render("Generation " + str(self.generation), True, (255, 255, 255))
-        gen_x = (WINDOW_W - generation_label.get_width()) // 2
+        gen_x = (CANVAS_W - generation_label.get_width()) // 2
         gen_y = (OFFSET_Y - generation_label.get_height()) // 2
 
         self.screen.blit(generation_label, (gen_x, gen_y))
@@ -137,7 +140,7 @@ class MarioRenderer:
         pygame.display.flip()
 
     # Cap simulation speed, MAYBE remove?
-    def tick(self, fps: int = 60):
+    def tick(self, fps: int = 0):
         self.clock.tick(fps)
 
     # Wrapper function for ease of use in population.py
