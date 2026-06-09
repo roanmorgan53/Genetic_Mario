@@ -26,11 +26,6 @@ OFFSET_Y = TITLE_H
 
 # --------------------------------
 
-# Gold border for leading Mario
-LEADER_BORDER_COLOR = (255, 215, 0)
-# Border thickness
-LEADER_BORDER_W = 5
-
 
 # The following code is for Java, but works same in python.
 # See `intensity` under Method Detail section
@@ -60,7 +55,6 @@ class MarioRenderer:
     """
     Renders 16 Mario agents as a 4×4 grid of NES frames in one pygame window.
     Dead agent windows are greyscale
-    Leading agent window has a gold border
     """
 
     def __init__(self, population_size: int):
@@ -94,7 +88,6 @@ class MarioRenderer:
         self,
         envs:       list,
         is_alive:   list[bool],
-        leader_index: int,
     ):
         
         # Loop over entire population of agents
@@ -118,14 +111,6 @@ class MarioRenderer:
             # Create surface and display at current cell location
             surface = pygame.surfarray.make_surface(transposed_frame)
             self.screen.blit(surface, (cell_x, cell_y))
-
-            # If index is leader, draw border to distinguish
-            if i == leader_index:
-                pygame.draw.rect(
-                    self.screen, LEADER_BORDER_COLOR,
-                    (cell_x, cell_y, CELL_WIDTH, CELL_HEIGHT),
-                    LEADER_BORDER_W,
-                )
 
             # Render frame # and displays
             number_label = self.font.render("#" + str(i), True, (255, 255, 255))

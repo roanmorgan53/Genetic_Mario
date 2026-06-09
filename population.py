@@ -67,12 +67,13 @@ def run_generation(envs: list, renderer: MarioRenderer):
         # unwrapped.ram[0x86] -> x position within current page
         # Find leading agents by multiplying page # by 256 and adding current x_pos
         # to get an overall x coordinate.
-        leader_index = max(
-            living_agents,
-            key=lambda agent: envs[agent].unwrapped.ram[0x6D] * 256 + envs[agent].unwrapped.ram[0x86],
-        )
+        def x_pos(agent):
+            return envs[agent].unwrapped.ram[0x6D] * 256 + envs[agent].unwrapped.ram[0x86]
 
-        renderer.draw(envs, is_alive, leader_index)
+        dead_agents = [i for i in range(POPULATION_SIZE) if not is_alive[i]]
+        top3 = (sorted(living_agents, key=x_pos, reverse=True) + sorted(dead_agents, key=x_pos, reverse=True))[:3]
+
+        renderer.draw([envs[i] for i in top3], [is_alive[i] for i in top3])
         renderer.tick()
 
 
