@@ -3,26 +3,22 @@ import pygame
 
 # Number of grids (3 by 1) -> 3
 GRID_COLS = 3
-GRID_ROWS = 1
 
 # Single NES frame
 CELL_WIDTH = 256   # one NES frame width
 CELL_HEIGHT = 240   # one NES frame height
-
-# Total Grid Dimensions
-GRID_W = GRID_COLS * CELL_WIDTH   # 1280
-GRID_H = GRID_ROWS * CELL_HEIGHT   # 960
 
 # Title bar above the grid
 TITLE_H = 40
 
 # Canvas is exactly the grid plus the title bar
 # Scales to monitor using pygame.SCALED
-CANVAS_W = GRID_W
-CANVAS_H = GRID_H + TITLE_H
+CANVAS_W = GRID_COLS * CELL_WIDTH
+CANVAS_H = CELL_HEIGHT + TITLE_H
 
-OFFSET_X = 0
-OFFSET_Y = TITLE_H
+
+# Padding inside each cell, used for making gaps in between cells
+CELL_PADDING = 4
 
 # --------------------------------
 
@@ -53,8 +49,8 @@ def to_greyscale(frame: np.ndarray) -> np.ndarray:
 
 class MarioRenderer:
     """
-    Renders 16 Mario agents as a 4×4 grid of NES frames in one pygame window.
-    Dead agent windows are greyscale
+    Renders 3 mario emulation frames side by side.
+    Dead mario frames are grayscale
     """
 
     def __init__(self, population_size: int):
@@ -67,14 +63,9 @@ class MarioRenderer:
 
         pygame.display.set_caption("Genetic Mario")
 
-        self.font       = pygame.font.SysFont(None, 18) # Index Font size = 18
-        self.generation_font = pygame.font.SysFont(None, 36) # Generation Font Size = 36
+        self.generation_font = pygame.font.SysFont(None, 36)
 
-        self.clock      = pygame.time.Clock()
-        self.quit       = False
-
-        # Start generation on 1 (duh)
-        self.generation = 1
+        self.quit = False
 
 
     # If user closes window, quit the program
@@ -84,54 +75,43 @@ class MarioRenderer:
                 self.quit = True
         return self.quit
 
-    def draw(
-        self,
-        envs:       list,
-        is_alive:   list[bool],
-    ):
+    def draw(self, envs: list, is_alive: list[bool], labels: list[str] = None):
         
+        self.screen.fill((0, 0, 0))
+
+        frame_w = CELL_WIDTH - 2 * CELL_PADDING
+        frame_h = CELL_HEIGHT - 2 * CELL_PADDING
+
         # Loop over entire population of agents
         for i in range(self.population_size):
-            col    = i % GRID_COLS
-            row    = i // GRID_COLS
-            cell_x = OFFSET_X + col * CELL_WIDTH
-            cell_y = OFFSET_Y + row * CELL_HEIGHT
+            col = i % GRID_COLS
+            row = i // GRID_COLS
+            cell_x = col * CELL_WIDTH
+            cell_y = TITLE_H + row * CELL_HEIGHT
 
             # Gets current frame from NES emulator
             frame = envs[i].render(mode='rgb_array')
-            
+
             # If mario is dead, set frame color(s) to grey
             if not is_alive[i]:
                 frame = to_greyscale(frame)
 
             # frame is: (height, width, 3)
-            # pygame needs: (width, height, 3) 
+            # pygame needs: (width, height, 3)
             transposed_frame = frame.transpose(1, 0, 2)
 
-            # Create surface and display at current cell location
+            # Scale down and add padding
             surface = pygame.surfarray.make_surface(transposed_frame)
-            self.screen.blit(surface, (cell_x, cell_y))
+            surface = pygame.transform.scale(surface, (frame_w, frame_h))
+            self.screen.blit(surface, (cell_x + CELL_PADDING, cell_y + CELL_PADDING))
 
-            # Render frame # and displays
-            number_label = self.font.render("#" + str(i), True, (255, 255, 255))
-            self.screen.blit(number_label, (cell_x + 4, cell_y + 4))
-
-        generation_label = self.generation_font.render("Generation " + str(self.generation), True, (255, 255, 255))
-        gen_x = (CANVAS_W - generation_label.get_width()) // 2
-        gen_y = (OFFSET_Y - generation_label.get_height()) // 2
-
-        self.screen.blit(generation_label, (gen_x, gen_y))
+            # Render label centered above the frame in the title bar zone
+            text = labels[i]
+            
+            generation_label = self.generation_font.render(text, True, (255, 255, 255))
+            label_x = cell_x + (CELL_WIDTH - generation_label.get_width()) // 2
+            label_y = (TITLE_H - generation_label.get_height()) // 2
+            
+            self.screen.blit(generation_label, (label_x, label_y))
 
         pygame.display.flip()
-
-    # Cap simulation speed, MAYBE remove?
-    def tick(self, fps: int = 0):
-        self.clock.tick(fps)
-
-    # Wrapper function for ease of use in population.py
-    def set_generation(self, generation: int):
-        self.generation = generation
-
-    # Wrapper function so pygame doesn't have to be imported in population.py
-    def close(self):
-        pygame.quit()
