@@ -1,6 +1,16 @@
 import multiprocessing
 import numpy as np
+import os
+import sys
+
+stderr = sys.stderr
+sys.stderr = open(os.devnull, "w")
+
 import gym_super_mario_bros
+
+sys.stderr.close()
+sys.stderr = stderr
+
 import torch
 import gamestate
 import random
@@ -77,7 +87,7 @@ NUM_ELITES = 2
 RANDOMS_PER_GENERATION = 2
 
 class GeneticAlgorithm() :
-    best_model = MarioNN()
+    best_models = [MarioNN()]
     best_score = -100000
     modelScores = []
     elites = []
@@ -106,13 +116,17 @@ class GeneticAlgorithm() :
         for trial_num, (mario, fitness_score) in enumerate(zip(self.population, scores), start=1):
             self.modelScores.append((mario, fitness_score))
 
-            print(f"Trial {trial_num}: fitness {fitness_score}")
+            # print(f"Trial {trial_num}: fitness {fitness_score}")
 
             if (fitness_score > self.best_score):
                 self.best_score = fitness_score
-                self.best_model = mario
 
-                print("Found a new best mario!")
+                if(len(self.best_models) == 3):
+                    self.best_models.pop(0)
+                self.best_models.append((mario, self.best_score))
+
+
+                # print("Found a new best mario!")
                 print(f"New Highscore: {self.best_score}")
 
     
@@ -219,13 +233,18 @@ class GeneticAlgorithm() :
         return self.population
 
     def save_best_model(self, filepath="best_mario_model.pth"):
-        if self.best_model is None:
+        if not self.best_models:
             raise ValueError("No best model is available to save.")
 
         torch.save(
             {
-                "model_state_dict": self.best_model.state_dict(),
-                "best_score": self.best_score
+                "models": [
+                    {
+                        "model_state_dict": model.state_dict(),
+                        "best_score": float(score)
+                    }
+                    for model, score in self.best_models
+                ]
             },
             filepath
         )
@@ -233,9 +252,19 @@ class GeneticAlgorithm() :
         return filepath
 
     def load_model(self, filepath="best_mario_model.pth"):
-        checkpoint = torch.load(filepath, map_location=torch.device("cpu"), weights_only=True)
-        loaded_model = MarioNN()
+        checkpoint = torch.load(filepath, weights_only=True)
 
+
+        models = []
+        for model_data in checkpoint["models"]:
+            model = MarioNN()
+            model.load_state_dict(model_data["model_state_dict"])
+            models.append((model, model_data["best_score"]))
+
+        """
+        single model loading method
+
+        loaded_model = MarioNN()
         if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
             loaded_model.load_state_dict(checkpoint["model_state_dict"])
             self.best_score = checkpoint.get("best_score", self.best_score)
@@ -245,7 +274,8 @@ class GeneticAlgorithm() :
         loaded_model.eval()
         self.best_model = loaded_model
 
-        return loaded_model
+        """
+        return models
 
     def run_model_from_file(
         self,
