@@ -1,10 +1,75 @@
+import multiprocessing
 import numpy as np
 import gym_super_mario_bros
 import torch
 import gamestate
 import random
+from nes_py.wrappers import JoypadSpace
 from gamestate import GameState
 from marionn import MarioNN
+
+
+def fitness(model: MarioNN, max_steps=10000):
+    env = gym_super_mario_bros.make('SuperMarioBros-v3')
+    env = JoypadSpace(env, gamestate.ACTION_SET)
+
+    score = 0
+    best_x = 0
+    stuck_frames = 0
+    prev_score = 0
+    prev_coins = 0
+
+    env.reset()
+    env.unwrapped.ram[0x075A] = 0
+
+    frame = 0
+    while frame < max_steps:
+        result_weights = model.forward(GameState(env))
+
+        action = int(torch.argmax(result_weights).item())
+
+        _, _, done, info = env.step(action)
+
+        # baseline value, how far mario went in the x
+        x = info["x_pos"]
+
+        if x > best_x:
+            score += x - best_x
+            best_x = x
+            stuck_frames = 0
+        else:
+            stuck_frames += 1
+            score -= 0.25
+
+        # score decrease for living too long
+        score -= 0.05
+
+        score += 0.02 * (info["score"] - prev_score)
+        score += 5 * (info["coins"] - prev_coins)
+
+        # completed the level
+        if info["flag_get"]:
+            score += 1000
+            break
+
+        if stuck_frames > 90:
+            score -= 50
+            break
+
+        if done:
+            score -= 100
+            break
+
+        prev_score = info["score"]
+        prev_coins = info["coins"]
+
+        frame += 1
+
+    env.reset()
+    env.close()
+
+    return score
+
 
 # constants
 INPUT_SPACE_LENGTH = gamestate.NUM_GAMESTATE_FEATURES
@@ -22,9 +87,9 @@ class GeneticAlgorithm() :
         pass
 
     """
-        iterates the genetic algorithm 
+        iterates the genetic algorithm
     """
-    def run_generation(self, env: gym_super_mario_bros.SuperMarioBrosEnv, individuals_per_gen=10, max_steps=1000):
+    def run_generation(self, individuals_per_gen=10, max_steps=1000):
         if not self.population:
             self.generate_solutions(individuals_per_gen)
         else:
@@ -32,16 +97,16 @@ class GeneticAlgorithm() :
 
         self.modelScores = []
 
-        trial_num = 1
+        num_workers = min(multiprocessing.cpu_count(), len(self.population))
 
         # run the models and get the fitness
-        for mario in self.population:
-            fitness_score = self.fitness(mario, env, max_steps)
+        with multiprocessing.Pool(num_workers) as pool:
+            scores = pool.starmap(fitness, [(mario, max_steps) for mario in self.population])
+
+        for trial_num, (mario, fitness_score) in enumerate(zip(self.population, scores), start=1):
             self.modelScores.append((mario, fitness_score))
 
             print(f"Trial {trial_num}: fitness {fitness_score}")
-
-            trial_num += 1
 
             if (fitness_score > self.best_score):
                 self.best_score = fitness_score
@@ -57,72 +122,8 @@ class GeneticAlgorithm() :
         self.population = self.new_random(population_size) 
         return self.population
 
-    # sends mario through the level
-    # returns a metric of how well the model preformed
-    def fitness(self, model: MarioNN, env: gym_super_mario_bros.SuperMarioBrosEnv, max_steps=10000):
-
-        fitness = 0
-        best_x = 0
-        stuck_frames = 0
-        prev_score = 0
-        prev_coins = 0
-
-        # start from the beginning
-        state = env.reset()
-
-        prev_x = -1000
-
-        frame = 0
-        while frame < max_steps:
-            result_weights = model.forward(GameState(env))
-
-            action = int(torch.argmax(result_weights).item())
-
-            _, _, done, info = env.step(action)
-
-            # baseline value, how far mario went in the x
-            x = info["x_pos"]
-
-            if x > best_x:
-                fitness += x - best_x   
-                best_x = x
-                stuck_frames = 0
-            else:
-                stuck_frames += 1
-                fitness -= 0.25
-
-            # score decrease for living too long
-            fitness -= 0.05
-
-            fitness += 0.02 * (info["score"] - prev_score)
-            fitness += 5 * (info["coins"] - prev_coins)
-
-            # completed the level
-            if info["flag_get"]:
-                fitness += 1000
-                break
-
-            if stuck_frames > 90:
-                fitness -= 50
-                break
-
-            if done:
-                fitness -= 100
-                break
-
-            prev_score = info["score"]
-            prev_coins = info["coins"]
-
-            env.render()
-
-            frame += 1
-
-        env.reset()
-
-        return fitness
-
     """
-        given the models and their fitness scores, 
+        given the models and their fitness scores,
         and the amount of genetic elites, only select the
         best performing models to pass on their genes
     """
