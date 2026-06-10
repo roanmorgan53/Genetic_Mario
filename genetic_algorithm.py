@@ -94,18 +94,20 @@ class GeneticAlgorithm() :
             # score decrease for living too long
             fitness -= 0.05
 
-            fitness += 0.02 * (info["score"] - prev_score)
-            fitness += 5 * (info["coins"] - prev_coins)
+            fitness += 0.02 * (info["score"] - prev_score) # score weight
+            fitness += 5 * (info["coins"] - prev_coins) # coins weight
 
             # completed the level
             if info["flag_get"]:
                 fitness += 1000
                 break
 
+            # penalize staying still for long periods of time
             if stuck_frames > 90:
                 fitness -= 50
                 break
 
+            # penalize dying
             if done:
                 fitness -= 100
                 break
