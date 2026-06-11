@@ -14,15 +14,10 @@ NUM_AGENTS = 3
 def load_model(filepath: str) -> MarioNN:
     
     # Load state from file
-    state = torch.load(filepath, map_location=torch.device("cpu"), weights_only=False)
     
-    model = MarioNN()
+    models = GeneticAlgorithm.load_model(self=None, filepath=filepath)
     
-    if isinstance(state, dict) and "model_state_dict" in state:
-        model.load_state_dict(state["model_state_dict"])
-    else:
-        raise ValueError("Unrecognized save format! " \
-        "Run nntest.py and input its generated files as parameters.")
+    model = models[2][0]
 
     model.eval()
     
@@ -78,21 +73,19 @@ def run(models: list[MarioNN], envs: list, renderer: MarioRenderer, labels: list
 if __name__ == '__main__':
     
     # Arg count check
-    if len(sys.argv) != 2:
-        print("\nUSAGE: python demo.py 3_model_file")
+    if len(sys.argv) != NUM_AGENTS + 1:
+        print("\nUSAGE: python demo.py model1 model2 model3")
         sys.exit(1)
 
 
     filepaths = sys.argv[1:]
-    models = [x[0] for x in GeneticAlgorithm.load_model(self=None, filepath=filepaths[0])]
+    models = [load_model(fp) for fp in filepaths]
     
     # Parses "_'X'g_" from filename,
     # using the regular name if "_'X'g_" not found
     labels = [f"Generation {match.group(1)}" 
               if (match := re.search(r'_(\d+)g_', fp)) 
               else fp for fp in filepaths]
-    
-    labels = labels * 3
     
     envs = [make_env() for _ in range(NUM_AGENTS)]
     renderer = MarioRenderer(NUM_AGENTS)
