@@ -60,12 +60,7 @@ Mario teaches himself how to play 1-1 using a genetic algorithm.
 ```bash
 pip install -r requirements.txt
 ```
-
-**Tested on Python 3.11.** Key version constraints:
-- `gym==0.25.1` — not compatible with gym 0.26+
-- `numpy==1.26.4` — not compatible with numpy 2.0+
-- `nes-py==8.2.1`
-- `gym-super-mario-bros==7.4.0`
+**IMPORTANT:** Use the exact versions in requirements.txt, as there are version constraints with the libraries.
 
 ## Training
 
@@ -91,12 +86,12 @@ best_mario_{generations}g_{population}i_{steps}st_rank2.pth
 best_mario_{generations}g_{population}i_{steps}st_rank3.pth
 ```
 
-NOTE: You can configure the number of models saved
+**NOTE:** You can configure the number of models saved
 Simply update MAX_BEST_MODELS in config.py
 
 ## Demo
 
-Render 1–3 trained models side by side:
+Render 1–3 trained models side by side (`.pth` files saved from running `train.py`):
 
 ```bash
 python demo.py model.pth
