@@ -109,17 +109,17 @@ class GameState:
     # turns the metadata into a 1D tensor
     def toTensor(self):
         stateList = [
-            self.dist_from_start,
-            int(self.at_goal),
-            self.score,
-            self.nearest_enemy,
-            self.time,
-            self.lives,
-            self.level,
-            int(self.obstacle_ahead),
-            self.obstacle_distance,
-            int(self.hole_ahead),
-            self.hole_distance
+            self.dist_from_start / 5000.0,
+            float(self.at_goal),
+            min(self.score, 10000) / 10000.0,
+            min(self.nearest_enemy, 9999) / 9999.0,
+            self.time / 400.0,
+            self.lives / 3.0,
+            self.level / 84.0,
+            float(self.obstacle_ahead),
+            self.obstacle_distance / (LOOKAHEAD_TILES + 1),
+            float(self.hole_ahead),
+            self.hole_distance / (LOOKAHEAD_TILES + 1),
         ]
 
         t = torch.tensor(stateList, dtype=torch.float32)
