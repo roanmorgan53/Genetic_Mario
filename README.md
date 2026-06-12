@@ -60,7 +60,7 @@ Mario teaches himself how to play 1-1 using a genetic algorithm.
 ```bash
 pip install -r requirements.txt
 ```
-**IMPORTANT:** Use the exact versions in requirements.txt, as there are version constraints with the libraries.
+**IMPORTANT:** Use the exact versions in `requirements.txt`, as there are version constraints with the libraries.
 
 ## Training
 
