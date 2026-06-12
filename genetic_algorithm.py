@@ -17,6 +17,23 @@ import random
 from nes_py.wrappers import JoypadSpace
 from gamestate import GameState
 from marionn import MarioNN
+from config import (
+    NUM_ELITES,
+    RANDOMS_PER_GENERATION,
+    MAX_BEST_MODELS,
+    TOURNAMENT_SIZE,
+    MUTATION_RATE,
+    MUTATION_STRENGTH,
+    INITIAL_WEIGHT_RANGE,
+    STUCK_FRAME_THRESHOLD,
+    STUCK_FRAME_PENALTY,
+    TIME_PENALTY_PER_FRAME,
+    GAME_SCORE_WEIGHT,
+    COIN_BONUS,
+    LEVEL_COMPLETION_BONUS,
+    STUCK_BREAK_PENALTY,
+    DEATH_PENALTY,
+)
 
 
 def fitness(model: MarioNN, max_steps=10000):
@@ -49,25 +66,25 @@ def fitness(model: MarioNN, max_steps=10000):
             stuck_frames = 0
         else:
             stuck_frames += 1
-            score -= 0.25
+            score -= STUCK_FRAME_PENALTY
 
         # score decrease for living too long
-        score -= 0.05
+        score -= TIME_PENALTY_PER_FRAME
 
-        score += 0.02 * (info["score"] - prev_score)
-        score += 5 * (info["coins"] - prev_coins)
+        score += GAME_SCORE_WEIGHT * (info["score"] - prev_score)
+        score += COIN_BONUS * (info["coins"] - prev_coins)
 
         # completed the level
         if info["flag_get"]:
-            score += 1000
+            score += LEVEL_COMPLETION_BONUS
             break
 
-        if stuck_frames > 90:
-            score -= 50
+        if stuck_frames > STUCK_FRAME_THRESHOLD:
+            score -= STUCK_BREAK_PENALTY
             break
 
         if done:
-            score -= 100
+            score -= DEATH_PENALTY
             break
 
         prev_score = info["score"]
@@ -83,18 +100,15 @@ def fitness(model: MarioNN, max_steps=10000):
 
 # constants
 INPUT_SPACE_LENGTH = gamestate.NUM_GAMESTATE_FEATURES
-NUM_ELITES = 2 
-RANDOMS_PER_GENERATION = 2
 
-class GeneticAlgorithm() :
-    best_models = [MarioNN()]
-    best_score = -100000
-    modelScores = []
-    elites = []
-    population = []
+class GeneticAlgorithm():
 
     def __init__(self):
-        pass
+        self.best_models = []
+        self.best_score = float('-inf')
+        self.model_scores = []
+        self.elites = []
+        self.population = []
 
     """
         iterates the genetic algorithm
@@ -105,7 +119,7 @@ class GeneticAlgorithm() :
         else:
             self.create_next_generation()
 
-        self.modelScores = []
+        self.model_scores = []
 
         num_workers = min(multiprocessing.cpu_count(), len(self.population))
 
@@ -114,14 +128,14 @@ class GeneticAlgorithm() :
             scores = pool.starmap(fitness, [(mario, max_steps) for mario in self.population])
 
         for trial_num, (mario, fitness_score) in enumerate(zip(self.population, scores), start=1):
-            self.modelScores.append((mario, fitness_score))
+            self.model_scores.append((mario, fitness_score))
 
             # print(f"Trial {trial_num}: fitness {fitness_score}")
 
             if (fitness_score > self.best_score):
                 self.best_score = fitness_score
 
-                if(len(self.best_models) == 3):
+                if(len(self.best_models) == MAX_BEST_MODELS):
                     self.best_models.pop(0)
                 self.best_models.append((mario, self.best_score))
 
@@ -129,11 +143,11 @@ class GeneticAlgorithm() :
                 # print("Found a new best mario!")
                 print(f"New Highscore: {self.best_score}")
 
-    
+
 
     # create the starting population
     def generate_solutions(self, population_size) -> list[MarioNN]:
-        self.population = self.new_random(population_size) 
+        self.population = self.new_random(population_size)
         return self.population
 
     """
@@ -143,13 +157,13 @@ class GeneticAlgorithm() :
     """
     def selection(self):
         self.elites = []
-        
+
         # sort the list by fitness
-        sorted = self.modelScores
-        sorted.sort(key=lambda x : x[1], reverse=True)
+        ranked = self.model_scores
+        ranked.sort(key=lambda x : x[1], reverse=True)
 
         i = 0
-        for model, score in sorted:
+        for model, score in ranked:
             if i >= NUM_ELITES:
                 break
 
@@ -167,13 +181,13 @@ class GeneticAlgorithm() :
         select individuals from the population tournament style.
     """
     def pick_parent(self, modelScores: list[tuple[MarioNN, float]]):
-        if len(modelScores) < 3:
+        if len(modelScores) < TOURNAMENT_SIZE:
             return MarioNN()
 
         hunger_games_tributes = []
 
         # get the three tributes that will fight to continue their bloodline
-        while len(hunger_games_tributes) < 3:
+        while len(hunger_games_tributes) < TOURNAMENT_SIZE:
             tribute = modelScores[random.randint(0, len(modelScores) - 1)]
 
             if tribute not in hunger_games_tributes:
@@ -184,14 +198,15 @@ class GeneticAlgorithm() :
         return katniss
 
     """
-        generates n random marios 
+        generates n random marios
     """
     def new_random(self, num_rand):
         marios = []
 
+        lo, hi = INITIAL_WEIGHT_RANGE
         for _ in range(num_rand):
             rmario = MarioNN()
-            rand_weights = np.random.uniform(-0.05, 0.05, size=rmario.get_num_weights())
+            rand_weights = np.random.uniform(lo, hi, size=rmario.get_num_weights())
             rmario.set_weights_flat(rand_weights)
             marios.append(rmario)
 
@@ -199,13 +214,13 @@ class GeneticAlgorithm() :
 
 
     """
-        generates the new population to run 
+        generates the new population to run
     """
     def create_next_generation(self):
         pop_size = len(self.population)
         new_population = []
 
-        # get the elites from the modelScores
+        # get the elites from the model_scores
         self.selection()
 
         # keep all the elites as-is
@@ -220,62 +235,47 @@ class GeneticAlgorithm() :
 
         # based on parent picking, construct the rest of the population
         for _ in range(remaining):
-            mother = self.pick_parent(self.modelScores)
-            father = self.pick_parent(self.modelScores)
+            mother = self.pick_parent(self.model_scores)
+            father = self.pick_parent(self.model_scores)
 
             child = MarioNN()
             child = child.crossover(father, mother)
-            child.mutate(child, mutation_rate=0.05, mutation_strength=0.1)
+            child.mutate(mutation_rate=MUTATION_RATE, mutation_strength=MUTATION_STRENGTH)
 
             new_population.append(child)
-        
+
         self.population = new_population
         return self.population
+
+    @staticmethod
+    def save_model(model: MarioNN, score: float, filepath: str):
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "best_score": float(score)
+            },
+            filepath
+        )
 
     def save_best_model(self, filepath="best_mario_model.pth"):
         if not self.best_models:
             raise ValueError("No best model is available to save.")
 
-        torch.save(
-            {
-                "models": [
-                    {
-                        "model_state_dict": model.state_dict(),
-                        "best_score": float(score)
-                    }
-                    for model, score in self.best_models
-                ]
-            },
-            filepath
-        )
+        # save only the single best model found so far
+        model, score = self.best_models[-1]
+        GeneticAlgorithm.save_model(model, score, filepath)
 
         return filepath
 
-    def load_model(self, filepath="best_mario_model.pth"):
+    @staticmethod
+    def load_model(filepath="best_mario_model.pth"):
         checkpoint = torch.load(filepath, weights_only=True)
 
+        model = MarioNN()
+        model.load_state_dict(checkpoint["model_state_dict"])
+        score = checkpoint.get("best_score", None)
 
-        models = []
-        for model_data in checkpoint["models"]:
-            model = MarioNN()
-            model.load_state_dict(model_data["model_state_dict"])
-            models.append((model, model_data["best_score"]))
-
-        """
-        single model loading method
-
-        loaded_model = MarioNN()
-        if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
-            loaded_model.load_state_dict(checkpoint["model_state_dict"])
-            self.best_score = checkpoint.get("best_score", self.best_score)
-        else:
-            loaded_model.load_state_dict(checkpoint)
-
-        loaded_model.eval()
-        self.best_model = loaded_model
-
-        """
-        return models
+        return model, score
 
     def run_model_from_file(
         self,

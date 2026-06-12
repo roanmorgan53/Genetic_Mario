@@ -115,3 +115,6 @@ class MarioRenderer:
             self.screen.blit(generation_label, (label_x, label_y))
 
         pygame.display.flip()
+
+    def close(self):
+        pygame.quit()

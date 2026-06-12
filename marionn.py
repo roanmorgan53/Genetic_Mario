@@ -3,6 +3,7 @@ import torch.nn as nn
 import numpy as np
 import gamestate
 from gamestate import GameState
+from config import MUTATION_RATE, MUTATION_STRENGTH
 
 NUM_GAMESTATE_ELEMENTS = gamestate.NUM_GAMESTATE_FEATURES
 
@@ -58,7 +59,7 @@ class MarioNN (nn.Module):
 
         # make sure the weights are the same length
         if len(weights_flat) != self.get_num_weights():
-            raise WeightsSizeMismatchError(self.get_num_weights, len(weights_flat))
+            raise WeightsSizeMismatchError(self.get_num_weights(), len(weights_flat))
 
         i = 0
 
@@ -84,6 +85,9 @@ class MarioNN (nn.Module):
     def get_num_weights(self):
         return sum(p.numel() for p in self.parameters())
 
+
+    # Currently not used *anywhere*
+    @staticmethod
     def create_individual():
         model = MarioNN()
         return model
@@ -106,9 +110,9 @@ class MarioNN (nn.Module):
         child.set_weights_flat(child_weights)
         return child
 
-    # randomly change random weights of the model to get non-deterministic behavior 
-    def mutate(self, model, mutation_rate=0.1, mutation_strength=0.5):
-        weights = model.get_weights_flat()
+    # randomly change random weights of the model to get non-deterministic behavior
+    def mutate(self, mutation_rate=MUTATION_RATE, mutation_strength=MUTATION_STRENGTH):
+        weights = self.get_weights_flat()
 
         # randomly choose the weights to mutate
         mask = np.random.random(len(weights)) < mutation_rate
@@ -116,9 +120,9 @@ class MarioNN (nn.Module):
         # apply the mutation on the weights
         weights[mask] += np.random.randn(mask.sum()) * mutation_strength
 
-        model.set_weights_flat(weights)
+        self.set_weights_flat(weights)
 
-        return model
+        return self
 
 class WeightsSizeMismatchError(Exception):
     def __init__(self, expected, received):
