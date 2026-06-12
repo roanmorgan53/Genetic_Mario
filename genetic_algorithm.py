@@ -33,6 +33,7 @@ from config import (
     LEVEL_COMPLETION_BONUS,
     STUCK_BREAK_PENALTY,
     DEATH_PENALTY,
+    BACKWARD_PENALTY,
 )
 
 
@@ -42,6 +43,7 @@ def fitness(model: MarioNN, max_steps=10000):
 
     score = 0
     best_x = 0
+    prev_x = 0
     stuck_frames = 0
     prev_score = 0
     prev_coins = 0
@@ -67,6 +69,11 @@ def fitness(model: MarioNN, max_steps=10000):
         else:
             stuck_frames += 1
             score -= STUCK_FRAME_PENALTY
+
+        if x < prev_x:
+            score -= (prev_x - x) * BACKWARD_PENALTY
+
+        prev_x = x
 
         # score decrease for living too long
         score -= TIME_PENALTY_PER_FRAME
